@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend
+    container_name: eacsp-backend
+    env_file: .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_AZURE_CLIENT_ID: ${VITE_AZURE_CLIENT_ID}
+    container_name: eacsp-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot
+    container_name: eacsp-certbot
+    volumes:
+      - certbot-conf:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+
+volumes:
+  certbot-conf:
+  certbot-www:
