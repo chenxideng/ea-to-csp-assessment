@@ -364,3 +364,6 @@ ea-to-csp-assessment/
 ├── .env.example
 └── .gitignore
 ```
+
+
+docker compose build --no-cache frontend && docker compose up -d
