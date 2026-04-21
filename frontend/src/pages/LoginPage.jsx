@@ -1,16 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Typography, Space, Card, Alert } from 'antd';
-import { LoginOutlined, CloudServerOutlined } from '@ant-design/icons';
+import { Button, Typography, Space, Card, Alert, Dropdown } from 'antd';
+import { LoginOutlined, CloudServerOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useAuth } from '../components/AuthProvider';
+import { useLanguage } from '../components/LanguageProvider';
 
 const { Title, Paragraph, Text } = Typography;
 
 const LoginPage = () => {
   const { login, isAuthenticated } = useAuth();
+  const { locale, setLocale, t, languageOptions } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const languageMenu = {
+    items: languageOptions.map((option) => ({
+      key: option.value,
+      label: option.label,
+      onClick: () => setLocale(option.value),
+    })),
+  };
+
+  const currentLanguageLabel = languageOptions.find((option) => option.value === locale)?.label || locale;
 
   if (isAuthenticated) {
     navigate('/dashboard', { replace: true });
@@ -25,7 +37,7 @@ const LoginPage = () => {
       navigate('/dashboard');
     } catch (err) {
       if (err.errorCode !== 'user_cancelled') {
-        setError(err.message || 'Login failed. Please try again.');
+        setError(err.message || t('login.loginFailed'));
       }
     } finally {
       setLoading(false);
@@ -73,6 +85,14 @@ const LoginPage = () => {
         }}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+            <Dropdown menu={languageMenu} placement="bottomRight" trigger={['click']}>
+              <Button icon={<GlobalOutlined />} aria-label={t('languageLabel')}>
+                {t('languageLabel')}: {currentLanguageLabel}
+              </Button>
+            </Dropdown>
+          </div>
+
           <div style={{
             width: 80, height: 80, borderRadius: '50%',
             background: 'linear-gradient(135deg, rgba(0,212,255,0.1), rgba(124,58,237,0.1))',
@@ -84,13 +104,12 @@ const LoginPage = () => {
           </div>
           <div>
             <Title level={2} style={{ marginBottom: 4, color: '#e2e8f0' }}>
-              EA to CSP Assessment
+              {t('login.title')}
             </Title>
             <div style={{ width: 60, height: 3, background: 'linear-gradient(90deg, #00d4ff, #7c3aed)', margin: '8px auto 0', borderRadius: 2 }} />
           </div>
           <Paragraph style={{ color: '#94a3b8', fontSize: 14 }}>
-            Assess your Azure resources for migration from Enterprise Agreement
-            or Web Direct to Cloud Solution Provider (CSP).
+            {t('login.description')}
           </Paragraph>
           <div
             style={{
@@ -101,11 +120,11 @@ const LoginPage = () => {
               border: '1px solid rgba(0, 212, 255, 0.1)',
             }}
           >
-            <Text strong style={{ color: '#00d4ff', fontSize: 13 }}>Supported account types:</Text>
+            <Text strong style={{ color: '#00d4ff', fontSize: 13 }}>{t('login.supportedAccountTypes')}</Text>
             <ul style={{ marginTop: 8, paddingLeft: 20, color: '#94a3b8', fontSize: 13 }}>
-              <li>Direct Enterprise Agreement (EA)</li>
-              <li>Indirect Enterprise Agreement</li>
-              <li>Web Direct / Pay-As-You-Go</li>
+              <li>{t('login.directEa')}</li>
+              <li>{t('login.indirectEa')}</li>
+              <li>{t('login.webDirect')}</li>
             </ul>
           </div>
           {error && (
@@ -126,15 +145,19 @@ const LoginPage = () => {
               letterSpacing: '0.5px',
             }}
           >
-            Sign in with Azure AD
+            {t('login.signIn')}
           </Button>
           <Text style={{ fontSize: 12, color: '#64748b' }}>
-            Secure single sign-on via Microsoft identity platform.
+            {t('login.secureSso')}
             <br />
-            Your credentials are handled entirely by Microsoft — never by us.
+            {t('login.credentialsHandled')}
           </Text>
         </Space>
       </Card>
+
+      <div style={{ position: 'absolute', bottom: 18, left: 0, right: 0, textAlign: 'center', color: '#64748b', fontSize: 12, zIndex: 2 }}>
+        {t('common.designedBy')}
+      </div>
     </div>
   );
 };

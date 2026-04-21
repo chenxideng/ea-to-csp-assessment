@@ -16,6 +16,7 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { report } from '../api';
+import { useLanguage } from '../components/LanguageProvider';
 
 const { Title, Paragraph } = Typography;
 
@@ -24,6 +25,7 @@ const ReportPage = () => {
   const [loading, setLoading] = useState(false);
   const [htmlContent, setHtmlContent] = useState(null);
   const [error, setError] = useState(null);
+  const { t } = useLanguage();
 
   const generateReport = async () => {
     setLoading(true);
@@ -39,10 +41,10 @@ const ReportPage = () => {
         const url = window.URL.createObjectURL(new Blob([res.data]));
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'csp-assessment-report.pdf';
+        link.download = t('reportPage.pdfName');
         link.click();
         window.URL.revokeObjectURL(url);
-        message.success('PDF report downloaded');
+        message.success(t('reportPage.successPdf'));
       } else {
         const res = await report.getJson();
         const blob = new Blob([JSON.stringify(res.data, null, 2)], {
@@ -51,13 +53,13 @@ const ReportPage = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'csp-assessment-report.json';
+        link.download = t('reportPage.jsonName');
         link.click();
         window.URL.revokeObjectURL(url);
-        message.success('JSON report downloaded');
+        message.success(t('reportPage.successJson'));
       }
     } catch (err) {
-      setError('Failed to generate report. Run an assessment first.');
+      setError(t('reportPage.error'));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ const ReportPage = () => {
 
   return (
     <div>
-      <Title level={3}>Generate Report</Title>
+      <Title level={3}>{t('reportPage.title')}</Title>
 
       {error && (
         <Alert
@@ -79,14 +81,12 @@ const ReportPage = () => {
 
       <Card style={{ marginBottom: 24 }}>
         <Paragraph>
-          Generate a comprehensive migration assessment report in your preferred
-          format. The report includes readiness scores, per-resource analysis,
-          risk assessments, and actionable recommendations.
+          {t('reportPage.description')}
         </Paragraph>
 
         <Space direction="vertical" size="middle" style={{ width: '100%' }}>
           <div>
-            <Title level={5}>Report Format</Title>
+            <Title level={5}>{t('reportPage.reportFormat')}</Title>
             <Radio.Group
               value={format}
               onChange={(e) => setFormat(e.target.value)}
@@ -95,13 +95,13 @@ const ReportPage = () => {
               size="large"
             >
               <Radio.Button value="html">
-                <Html5Outlined /> HTML Preview
+                <Html5Outlined /> {t('reportPage.htmlPreview')}
               </Radio.Button>
               <Radio.Button value="pdf">
-                <FilePdfOutlined /> Download PDF
+                <FilePdfOutlined /> {t('reportPage.downloadPdf')}
               </Radio.Button>
               <Radio.Button value="json">
-                <FileTextOutlined /> Download JSON
+                <FileTextOutlined /> {t('reportPage.downloadJson')}
               </Radio.Button>
             </Radio.Group>
           </div>
@@ -113,7 +113,7 @@ const ReportPage = () => {
             loading={loading}
             onClick={generateReport}
           >
-            Generate Report
+            {t('reportPage.generate')}
           </Button>
         </Space>
       </Card>
@@ -121,12 +121,12 @@ const ReportPage = () => {
       {loading && (
         <div style={{ textAlign: 'center', padding: 60 }}>
           <Spin size="large" />
-          <p style={{ marginTop: 16 }}>Generating report...</p>
+          <p style={{ marginTop: 16 }}>{t('reportPage.generating')}</p>
         </div>
       )}
 
       {htmlContent && (
-        <Card title="Report Preview" style={{ marginBottom: 24 }}>
+        <Card title={t('reportPage.preview')} style={{ marginBottom: 24 }}>
           <div
             dangerouslySetInnerHTML={{ __html: htmlContent }}
             style={{ maxHeight: '80vh', overflow: 'auto' }}

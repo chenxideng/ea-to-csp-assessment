@@ -22,6 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { resources } from '../api';
 import { useAuth } from '../components/AuthProvider';
+import { useLanguage } from '../components/LanguageProvider';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +50,7 @@ const DashboardPage = () => {
   const [resourceCounts, setResourceCounts] = useState({});
   const navigate = useNavigate();
   const { isPersonal, account } = useAuth();
+  const { t } = useLanguage();
 
   const loadSubscriptions = async () => {
     setLoading(true);
@@ -79,8 +81,8 @@ const DashboardPage = () => {
       setResourceCounts(Object.fromEntries(counts));
     } catch (err) {
       const msg = err?.response?.status === 401
-        ? 'Unable to access Azure resources. Your account may not have Azure subscriptions or the required permissions. Please sign in with a work/school account that has Azure access.'
-        : 'Failed to load subscriptions. Please check your authentication.';
+        ? t('dashboard.accessError')
+        : t('dashboard.loadError');
       setError(msg);
     } finally {
       setLoading(false);
@@ -97,19 +99,19 @@ const DashboardPage = () => {
 
   const columns = [
     {
-      title: 'Subscription Name',
+      title: t('dashboard.subscriptionName'),
       dataIndex: 'display_name',
       key: 'display_name',
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Subscription ID',
+      title: t('dashboard.subscriptionId'),
       dataIndex: 'subscription_id',
       key: 'subscription_id',
       render: (text) => <Text copyable={{ text }}>{text.slice(0, 13)}...</Text>,
     },
     {
-      title: 'State',
+      title: t('dashboard.state'),
       dataIndex: 'state',
       key: 'state',
       render: (state) => (
@@ -120,13 +122,13 @@ const DashboardPage = () => {
       ),
     },
     {
-      title: 'Account Type',
+      title: t('dashboard.accountType'),
       key: 'account_type',
       render: (_, record) => {
         const type = accountTypes[record.subscription_id];
         return type ? (
           <Tag color={accountTypeColors[type]}>
-            {accountTypeLabels[type] || type}
+            {t(`dashboard.accountTypes.${type}`) || accountTypeLabels[type] || type}
           </Tag>
         ) : (
           <Spin size="small" />
@@ -134,7 +136,7 @@ const DashboardPage = () => {
       },
     },
     {
-      title: 'Resources',
+      title: t('dashboard.resources'),
       key: 'resources',
       render: (_, record) => {
         const count = resourceCounts[record.subscription_id];
@@ -153,24 +155,24 @@ const DashboardPage = () => {
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0, color: '#e2e8f0' }}>
-            Dashboard
+            {t('dashboard.title')}
           </Title>
           <div style={{ width: 40, height: 3, background: 'linear-gradient(90deg, #00d4ff, #7c3aed)', marginTop: 6, borderRadius: 2 }} />
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={loadSubscriptions} disabled={isPersonal}>
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button type="primary" onClick={() => navigate('/assessment')} disabled={isPersonal}>
-            Run Assessment
+            {t('dashboard.runAssessment')}
           </Button>
         </Space>
       </Row>
 
       {isPersonal && (
         <Alert
-          message="Personal Account Detected"
-          description={`You are signed in as ${account?.username || 'personal user'}. Personal Microsoft accounts do not have Azure subscriptions. To view Azure resources and run assessments, please sign in with a work or school account (organizational account).`}
+          message={t('dashboard.personalDetected')}
+          description={t('dashboard.personalDescription', { username: account?.username || 'personal user' })}
           type="info"
           showIcon
           style={{ marginBottom: 16, background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.2)' }}
@@ -191,7 +193,7 @@ const DashboardPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #00d4ff' }}>
             <Statistic
-              title="Subscriptions"
+              title={t('common.subscriptions')}
               value={subscriptions.length}
               prefix={<CloudOutlined style={{ color: '#00d4ff' }} />}
             />
@@ -200,7 +202,7 @@ const DashboardPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #7c3aed' }}>
             <Statistic
-              title="Total Resources"
+              title={t('common.totalResources')}
               value={totalResources}
               prefix={<AppstoreOutlined style={{ color: '#7c3aed' }} />}
             />
@@ -209,7 +211,7 @@ const DashboardPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #10b981' }}>
             <Statistic
-              title="Ready for Assessment"
+              title={t('dashboard.readyForAssessment')}
               value={subscriptions.filter((s) => s.state === 'Enabled').length}
               prefix={<CheckCircleOutlined style={{ color: '#10b981' }} />}
             />
@@ -217,13 +219,14 @@ const DashboardPage = () => {
         </Col>
       </Row>
 
-      <Card title={<span style={{ color: '#e2e8f0' }}>Azure Subscriptions</span>}>
+      <Card title={<span style={{ color: '#e2e8f0' }}>{t('dashboard.azureSubscriptions')}</span>}>
         <Table
           dataSource={subscriptions}
           columns={columns}
           rowKey="subscription_id"
           loading={loading}
           pagination={false}
+          locale={{ emptyText: t('common.noData') }}
         />
       </Card>
     </div>

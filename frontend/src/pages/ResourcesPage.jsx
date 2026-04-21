@@ -12,7 +12,6 @@ import {
   Row,
   Col,
   Statistic,
-  Spin,
 } from 'antd';
 import {
   ReloadOutlined,
@@ -23,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { resources } from '../api';
 import { useAuth } from '../components/AuthProvider';
+import { useLanguage } from '../components/LanguageProvider';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,6 +36,7 @@ const ResourcesPage = () => {
   const [filterType, setFilterType] = useState('all');
   const [filterSub, setFilterSub] = useState('all');
   const { isPersonal, account } = useAuth();
+  const { t } = useLanguage();
 
   const loadAllResources = async () => {
     setLoading(true);
@@ -63,8 +64,8 @@ const ResourcesPage = () => {
     } catch (err) {
       const msg =
         err?.response?.status === 401
-          ? 'Unable to access Azure resources. Please sign in with an account that has Azure access.'
-          : 'Failed to load resources.';
+          ? t('resourcesPage.accessError')
+          : t('resourcesPage.loadError');
       setError(msg);
     } finally {
       setLoading(false);
@@ -100,12 +101,12 @@ const ResourcesPage = () => {
 
   const exportCsv = () => {
     const headers = [
-      'Name',
-      'Type',
-      'Resource Group',
-      'Location',
-      'Subscription',
-      'Subscription ID',
+      t('resourcesPage.resourceName'),
+      t('resourcesPage.type'),
+      t('resourcesPage.resourceGroup'),
+      t('resourcesPage.location'),
+      t('resourcesPage.subscription'),
+      t('dashboard.subscriptionId'),
     ];
     const rows = filteredResources.map((r) => [
       r.name,
@@ -120,21 +121,21 @@ const ResourcesPage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'azure-resources.csv';
+    a.download = t('resourcesPage.csvName');
     a.click();
     URL.revokeObjectURL(url);
   };
 
   const columns = [
     {
-      title: 'Resource Name',
+      title: t('resourcesPage.resourceName'),
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Type',
+      title: t('resourcesPage.type'),
       dataIndex: 'resource_type',
       key: 'resource_type',
       sorter: (a, b) => a.resource_type.localeCompare(b.resource_type),
@@ -144,20 +145,20 @@ const ResourcesPage = () => {
       },
     },
     {
-      title: 'Resource Group',
+      title: t('resourcesPage.resourceGroup'),
       dataIndex: 'resource_group',
       key: 'resource_group',
       sorter: (a, b) => a.resource_group.localeCompare(b.resource_group),
     },
     {
-      title: 'Location',
+      title: t('resourcesPage.location'),
       dataIndex: 'location',
       key: 'location',
       sorter: (a, b) => a.location.localeCompare(b.location),
       render: (text) => <Tag>{text}</Tag>,
     },
     {
-      title: 'Subscription',
+      title: t('resourcesPage.subscription'),
       dataIndex: 'subscription_name',
       key: 'subscription_name',
       sorter: (a, b) =>
@@ -170,28 +171,28 @@ const ResourcesPage = () => {
       <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
         <div>
           <Title level={3} style={{ margin: 0, color: '#e2e8f0' }}>
-            Resource Inventory
+            {t('resourcesPage.title')}
           </Title>
           <div style={{ width: 40, height: 3, background: 'linear-gradient(90deg, #00d4ff, #7c3aed)', marginTop: 6, borderRadius: 2 }} />
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={loadAllResources} disabled={isPersonal}>
-            Refresh
+            {t('common.refresh')}
           </Button>
           <Button
             icon={<DownloadOutlined />}
             onClick={exportCsv}
             disabled={filteredResources.length === 0}
           >
-            Export CSV
+            {t('common.exportCsv')}
           </Button>
         </Space>
       </Row>
 
       {isPersonal && (
         <Alert
-          message="Personal Account"
-          description={`Signed in as ${account?.username || 'personal user'}. Personal Microsoft accounts cannot access Azure Resource Manager. To view your Azure resource inventory, please sign out and sign in with a work or school account.`}
+          message={t('resourcesPage.personalTitle')}
+          description={t('resourcesPage.personalDescription', { username: account?.username || 'personal user' })}
           type="info"
           showIcon
           style={{ marginBottom: 16, background: 'rgba(0,212,255,0.05)', border: '1px solid rgba(0,212,255,0.2)' }}
@@ -212,7 +213,7 @@ const ResourcesPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #00d4ff' }}>
             <Statistic
-              title="Subscriptions"
+              title={t('common.subscriptions')}
               value={subscriptions.length}
               prefix={<CloudOutlined style={{ color: '#00d4ff' }} />}
             />
@@ -221,7 +222,7 @@ const ResourcesPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #7c3aed' }}>
             <Statistic
-              title="Total Resources"
+              title={t('common.totalResources')}
               value={allResources.length}
               prefix={<AppstoreOutlined style={{ color: '#7c3aed' }} />}
             />
@@ -230,7 +231,7 @@ const ResourcesPage = () => {
         <Col span={8}>
           <Card className="stat-card" style={{ borderTop: '2px solid #10b981' }}>
             <Statistic
-              title="Resource Types"
+              title={t('common.resourceTypes')}
               value={resourceTypes.length}
               prefix={<AppstoreOutlined />}
             />
@@ -241,7 +242,7 @@ const ResourcesPage = () => {
       <Card>
         <Space style={{ marginBottom: 16, width: '100%' }} wrap>
           <Input
-            placeholder="Search by name, type, or resource group..."
+            placeholder={t('resourcesPage.searchPlaceholder')}
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -253,7 +254,7 @@ const ResourcesPage = () => {
             onChange={setFilterSub}
             style={{ width: 250 }}
           >
-            <Option value="all">All Subscriptions</Option>
+            <Option value="all">{t('common.allSubscriptions')}</Option>
             {subscriptions.map((s) => (
               <Option key={s.subscription_id} value={s.subscription_id}>
                 {s.display_name}
@@ -267,7 +268,7 @@ const ResourcesPage = () => {
             showSearch
             optionFilterProp="children"
           >
-            <Option value="all">All Resource Types</Option>
+            <Option value="all">{t('common.allResourceTypes')}</Option>
             {resourceTypes.map((t) => (
               <Option key={t} value={t}>
                 {t.split('/').pop()}
@@ -285,10 +286,11 @@ const ResourcesPage = () => {
             pageSize: 50,
             showSizeChanger: true,
             pageSizeOptions: ['20', '50', '100', '200'],
-            showTotal: (total) => `Total ${total} resources`,
+            showTotal: (total) => t('resourcesPage.totalLabel', { count: total }),
           }}
           scroll={{ x: 900 }}
           size="middle"
+          locale={{ emptyText: t('common.noData') }}
         />
       </Card>
     </div>

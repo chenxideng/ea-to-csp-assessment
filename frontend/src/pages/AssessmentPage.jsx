@@ -29,15 +29,16 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { resources, assessment } from '../api';
+import { useLanguage } from '../components/LanguageProvider';
 
 const { Title, Text, Paragraph } = Typography;
 
-const difficultyConfig = {
-  easy: { color: '#52c41a', icon: <CheckCircleOutlined />, label: 'Easy Transfer' },
-  moderate: { color: '#faad14', icon: <ExclamationCircleOutlined />, label: 'Moderate' },
-  hard: { color: '#ff4d4f', icon: <CloseCircleOutlined />, label: 'Hard / Redeploy' },
-  not_supported: { color: '#8c8c8c', icon: <WarningOutlined />, label: 'Not Supported' },
-  needs_review: { color: '#1890ff', icon: <QuestionCircleOutlined />, label: 'Needs Review' },
+const difficultyBase = {
+  easy: { color: '#52c41a', icon: <CheckCircleOutlined /> },
+  moderate: { color: '#faad14', icon: <ExclamationCircleOutlined /> },
+  hard: { color: '#ff4d4f', icon: <CloseCircleOutlined /> },
+  not_supported: { color: '#8c8c8c', icon: <WarningOutlined /> },
+  needs_review: { color: '#1890ff', icon: <QuestionCircleOutlined /> },
 };
 
 const AssessmentPage = () => {
@@ -49,6 +50,15 @@ const AssessmentPage = () => {
   const [loadingSubs, setLoadingSubs] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
+  const difficultyConfig = {
+    easy: { ...difficultyBase.easy, label: t('assessmentPage.difficulties.easy') },
+    moderate: { ...difficultyBase.moderate, label: t('assessmentPage.difficulties.moderate') },
+    hard: { ...difficultyBase.hard, label: t('assessmentPage.difficulties.hard') },
+    not_supported: { ...difficultyBase.not_supported, label: t('assessmentPage.difficulties.not_supported') },
+    needs_review: { ...difficultyBase.needs_review, label: t('assessmentPage.difficulties.needs_review') },
+  };
 
   useEffect(() => {
     resources
@@ -57,9 +67,9 @@ const AssessmentPage = () => {
         setSubscriptions(res.data.subscriptions);
         setSelectedSubs(res.data.subscriptions.map((s) => s.subscription_id));
       })
-      .catch(() => setError('Failed to load subscriptions'))
+      .catch(() => setError(t('assessmentPage.loadError')))
       .finally(() => setLoadingSubs(false));
-  }, []);
+  }, [t]);
 
   const runAssessment = async () => {
     setLoading(true);
@@ -71,7 +81,7 @@ const AssessmentPage = () => {
       });
       setResult(res.data);
     } catch (err) {
-      setError('Assessment failed. Please try again.');
+      setError(t('assessmentPage.runError'));
     } finally {
       setLoading(false);
     }
@@ -79,25 +89,25 @@ const AssessmentPage = () => {
 
   const resourceColumns = [
     {
-      title: 'Resource',
+      title: t('assessmentPage.resource'),
       dataIndex: ['resource', 'name'],
       key: 'name',
       render: (text) => <Text strong>{text}</Text>,
     },
     {
-      title: 'Type',
+      title: t('assessmentPage.type'),
       dataIndex: ['resource', 'type'],
       key: 'type',
       render: (text) => <Text style={{ fontSize: 12 }}>{text}</Text>,
       ellipsis: true,
     },
     {
-      title: 'Location',
+      title: t('assessmentPage.location'),
       dataIndex: ['resource', 'location'],
       key: 'location',
     },
     {
-      title: 'Difficulty',
+      title: t('assessmentPage.difficulty'),
       dataIndex: 'difficulty',
       key: 'difficulty',
       filters: Object.entries(difficultyConfig).map(([key, val]) => ({
@@ -115,10 +125,10 @@ const AssessmentPage = () => {
       },
     },
     {
-      title: 'Downtime',
+      title: t('assessmentPage.downtime'),
       dataIndex: 'estimated_downtime',
       key: 'downtime',
-      render: (text) => text || 'N/A',
+      render: (text) => text || t('assessmentPage.notAvailable'),
     },
   ];
 
@@ -126,14 +136,14 @@ const AssessmentPage = () => {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
         <Spin size="large" />
-        <p style={{ marginTop: 16 }}>Loading subscriptions...</p>
+        <p style={{ marginTop: 16 }}>{t('common.loadingSubscriptions')}</p>
       </div>
     );
   }
 
   return (
     <div>
-      <Title level={3}>CSP Migration Assessment</Title>
+      <Title level={3}>{t('assessmentPage.title')}</Title>
 
       {error && (
         <Alert
@@ -147,10 +157,10 @@ const AssessmentPage = () => {
 
       {/* Configuration Panel */}
       {!result && (
-        <Card title="Configure Assessment" style={{ marginBottom: 24 }}>
+        <Card title={t('assessmentPage.configure')} style={{ marginBottom: 24 }}>
           <Row gutter={24}>
             <Col span={12}>
-              <Title level={5}>Select Subscriptions</Title>
+              <Title level={5}>{t('assessmentPage.selectSubscriptions')}</Title>
               <Checkbox.Group
                 value={selectedSubs}
                 onChange={setSelectedSubs}
@@ -170,8 +180,8 @@ const AssessmentPage = () => {
             </Col>
             <Col span={12}>
               <Title level={5}>
-                Override Account Type{' '}
-                <Tooltip title="Override the auto-detected account type if needed">
+                {t('assessmentPage.overrideAccountType')}{' '}
+                <Tooltip title={t('assessmentPage.overrideTooltip')}>
                   <QuestionCircleOutlined style={{ fontSize: 14 }} />
                 </Tooltip>
               </Title>
@@ -181,7 +191,7 @@ const AssessmentPage = () => {
                   <div key={sub.subscription_id} style={{ marginBottom: 12 }}>
                     <Text>{sub.display_name}</Text>
                     <Select
-                      placeholder="Auto-detect"
+                      placeholder={t('assessmentPage.autoDetect')}
                       allowClear
                       style={{ width: '100%', marginTop: 4 }}
                       onChange={(val) =>
@@ -191,10 +201,10 @@ const AssessmentPage = () => {
                         }))
                       }
                       options={[
-                        { label: 'Auto-detect', value: undefined },
-                        { label: 'Direct EA', value: 'direct_ea' },
-                        { label: 'Indirect EA', value: 'indirect_ea' },
-                        { label: 'Web Direct / PAYG', value: 'web_direct' },
+                        { label: t('assessmentPage.autoDetect'), value: undefined },
+                        { label: t('assessmentPage.overrideOptions.direct_ea'), value: 'direct_ea' },
+                        { label: t('assessmentPage.overrideOptions.indirect_ea'), value: 'indirect_ea' },
+                        { label: t('assessmentPage.overrideOptions.web_direct'), value: 'web_direct' },
                       ]}
                     />
                   </div>
@@ -210,7 +220,7 @@ const AssessmentPage = () => {
             disabled={selectedSubs.length === 0}
             onClick={runAssessment}
           >
-            Run Assessment
+            {t('assessmentPage.runAssessment')}
           </Button>
         </Card>
       )}
@@ -220,7 +230,7 @@ const AssessmentPage = () => {
         <div style={{ textAlign: 'center', padding: 60 }}>
           <Spin size="large" />
           <p style={{ marginTop: 16 }}>
-            Scanning resources and generating assessment...
+            {t('assessmentPage.loading')}
           </p>
         </div>
       )}
@@ -243,7 +253,7 @@ const AssessmentPage = () => {
                   size={140}
                 />
                 <div style={{ marginTop: 8 }}>
-                  <Text strong>Readiness Score</Text>
+                  <Text strong>{t('assessmentPage.readinessScore')}</Text>
                 </div>
               </Col>
               <Col span={18}>
@@ -270,8 +280,10 @@ const AssessmentPage = () => {
                 </Row>
                 <div style={{ marginTop: 16 }}>
                   <Text>
-                    <strong>{result.summary.total_resources}</strong> resources across{' '}
-                    <strong>{result.summary.total_subscriptions}</strong> subscription(s)
+                    {t('assessmentPage.totalSummary', {
+                      resources: result.summary.total_resources,
+                      subscriptions: result.summary.total_subscriptions,
+                    })}
                   </Text>
                 </div>
               </Col>
@@ -279,7 +291,7 @@ const AssessmentPage = () => {
           </Card>
 
           {/* Key Findings */}
-          <Card title="Key Findings" style={{ marginBottom: 24 }}>
+          <Card title={t('assessmentPage.keyFindings')} style={{ marginBottom: 24 }}>
             <List
               dataSource={result.summary.key_findings}
               renderItem={(item) => (
@@ -305,7 +317,10 @@ const AssessmentPage = () => {
                     {subAssessment.account_type.replace('_', ' ').toUpperCase()}
                   </Tag>
                   <Text type="secondary">
-                    {subAssessment.total_resources} resources
+                    {t('assessmentPage.totalSummary', {
+                      resources: subAssessment.total_resources,
+                      subscriptions: 1,
+                    })}
                   </Text>
                 </Space>
               ),
@@ -316,15 +331,16 @@ const AssessmentPage = () => {
                   rowKey={(r) => r.resource.id}
                   size="small"
                   pagination={{ pageSize: 20 }}
+                  locale={{ emptyText: t('common.noData') }}
                   expandable={{
                     expandedRowRender: (record) => (
                       <div style={{ padding: '8px 0' }}>
                         <Paragraph>
-                          <strong>Reason:</strong> {record.reason}
+                          <strong>{t('assessmentPage.reason')}:</strong> {record.reason}
                         </Paragraph>
                         {record.recommendations.length > 0 && (
                           <>
-                            <strong>Recommendations:</strong>
+                            <strong>{t('assessmentPage.recommendations')}:</strong>
                             <ul>
                               {record.recommendations.map((r, i) => (
                                 <li key={i}>{r}</li>
@@ -334,7 +350,7 @@ const AssessmentPage = () => {
                         )}
                         {record.risks.length > 0 && (
                           <>
-                            <strong style={{ color: '#ff4d4f' }}>Risks:</strong>
+                            <strong style={{ color: '#ff4d4f' }}>{t('assessmentPage.risks')}:</strong>
                             <ul>
                               {record.risks.map((r, i) => (
                                 <li key={i} style={{ color: '#ff4d4f' }}>
@@ -360,9 +376,9 @@ const AssessmentPage = () => {
                 icon={<FileTextOutlined />}
                 onClick={() => navigate('/report')}
               >
-                View Full Report
+                {t('assessmentPage.viewReport')}
               </Button>
-              <Button onClick={() => setResult(null)}>Run New Assessment</Button>
+              <Button onClick={() => setResult(null)}>{t('assessmentPage.newAssessment')}</Button>
             </Space>
           </Card>
         </>
